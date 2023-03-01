@@ -1,0 +1,66 @@
+; A resource consists of any number of
+; section headers, entries, comments and empty lines.
+; These are all separated from each other by LF or CRLF line endings.
+; Except for empty lines, all lines start with a non-whitespace character.
+resource = line *(newline line)
+line = section-head / entry / comment / empty-line
+
+; As in TOML, entries after a section-head belong to the section.
+; Sections do not nest under preceding sections,
+; but must always define their full id path.
+section-head = "[" [ws] id [ws] "]" [ws]
+entry = id [ws] "=" [ws] value
+
+; Adjacent comments should be considered as a single multi-line comment.
+; Comments attach to a subsequent section-head or entry,
+; if not separated from it by any empty lines.
+; A first comment in a resource preceding any section-head or entry
+; and followed by an empty line attaches to the whole resource.
+comment = "#" *(content / backslash)
+empty-line = [ws]
+
+ws = 1*(SP / HTAB)
+newline = CRLF / LF
+
+; An identifier is made up of one or more non-empty parts separated by dots.
+; Syntax and non-printable characters must be \escaped in identifiers.
+id = id-part *([ws] "." [ws] id-part)
+id-part = 1*(id-char / id-escape)
+id-char = ALPHA / DIGIT / "-" / "_" ; omits "." compared to name-char
+        / %xB7 / %xC0-D6 / %xD8-F6 / %xF8-2FF
+        / %x300-37D / %x37F-1FFF / %x200C-200D / %x203F-2040
+        / %x2070-218F / %x2C00-2FEF / %x3001-D7FF
+        / %xF900-FDCF / %xFDF0-FFFD / %x10000-EFFFF
+id-escape = backslash (escaped / "." / "[" / "]" / "#" / "=")
+
+; Values must be parsed as MF2 messages.
+; A message may be defined on multiple lines,
+; as long as each line after the first is indented by at least one space.
+; If a message body line starts with significant whitespace,
+; its first character must be \escaped.
+value = value-line *(newline ws value-line)
+value-line = *(content / value-escape)
+; Each of the escape sequences recognised by MF2 \\, \{, \|, \}
+; pass through resource parsing as complete and intact,
+; so that they do not need to be double-escaped.
+value-escape = backslash (escaped / "{" / "|" / "}")
+
+; A resource must not contain any control characters or vertical whitespace
+; which might be mistaken for newlines.
+content = HTAB ; omit C0 controls except for HTAB
+        / %x20-5B ; omit \
+        / %x5D-7E ; omit C1 controls
+        / %x00A0-2027 ; omit LSEP & PSEP
+        / %x202A-D7FF ; omit surrogates
+        / %xE000-10FFFF
+
+; The bulk of valid escapes is shared between id-escape and value-escape.
+; As an example, each of the these is a valid representation of a horizontal tab:
+; \	, \t, \x09, \u0009, \U00009
+escaped = backslash
+        / SP / HTAB
+        / %s"n" / %s"r" / %s"t" ; represent LF, CR, HTAB
+        / (%s"x" HEXDIG HEXDIG)
+        / (%s"u" HEXDIG HEXDIG HEXDIG HEXDIG)
+        / (%s"U" HEXDIG HEXDIG HEXDIG HEXDIG HEXDIG HEXDIG)
+backslash = "\"
