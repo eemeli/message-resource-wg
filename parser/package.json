@@ -1,0 +1,36 @@
+{
+  "name": "message-resource-parser",
+  "private": true,
+  "description": "Reference parser for message resources",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eemeli/message-resource-wg.git"
+  },
+  "keywords": [
+    "messageformat",
+    "mf2",
+    "resource",
+    "parser",
+    "localization"
+  ],
+  "author": "Eemeli Aro <eemeli@mozilla.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/eemeli/message-resource-wg/issues"
+  },
+  "homepage": "https://github.com/eemeli/message-resource-wg#readme",
+  "devDependencies": {
+    "@vitest/coverage-c8": "^0.31.3",
+    "prettier": "^2.8.8",
+    "typescript": "^5.0.4",
+    "vitest": "^0.31.3"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true
+  }
+}
