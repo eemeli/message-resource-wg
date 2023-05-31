@@ -57,7 +57,7 @@ content = HTAB ; omit C0 controls except for HTAB
 
 ; The bulk of valid escapes is shared between id-escape and value-escape.
 ; As an example, each of the these is a valid representation of a horizontal tab:
-; \	, \t, \x09, \u0009, \U00009
+; \	, \t, \x09, \u0009, \U000009
 escaped = backslash
         / SP / HTAB
         / %s"n" / %s"r" / %s"t" ; represent LF, CR, HTAB
