@@ -1,0 +1,42 @@
+name: parser
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16, 18, latest]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          cache: npm
+          cache-dependency-path: parser/package-lock.json
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+        working-directory: parser
+      - run: npm test
+        working-directory: parser
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: npm
+          cache-dependency-path: parser/package-lock.json
+          node-version: 18
+      - run: npm ci
+        working-directory: parser
+      - run: npx prettier --check src/
+        working-directory: parser
