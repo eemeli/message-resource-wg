@@ -25,7 +25,7 @@ export namespace CST {
     range: Range
   }
 
-  export type Id = { raw: IdPart[]; value: string[] }
+  export type Id = { raw: IdPart[]; value: string[]; range: Range }
   export type IdPart = Content | Escape | IdDot
   export type IdDot = { type: 'dot'; range: Range }
 
@@ -47,6 +47,9 @@ let onError: (range: CST.Range, msg: string) => void
 
 /** GLOBAL STATE: Current parser position */
 let pos: number
+
+/** GLOBAL STATE: Seen identifier paths */
+let prevIdPaths: Array<{ path: string[]; error: boolean; range: CST.Range }>
 
 /** GLOBAL STATE: The full source being parsed */
 let source: string
@@ -73,7 +76,9 @@ export function parseCST(
   const res: CST.Resource = []
   onError = onError_
   pos = 0
+  prevIdPaths = []
   source = source_
+  let sectionId: string[] = []
   while (pos < source.length) {
     switch (source[pos]) {
       case '\n':
@@ -86,10 +91,14 @@ export function parseCST(
         res.push(parseComment())
         break
       case '[':
-        res.push(parseSectionHead())
+        {
+          const sh = parseSectionHead()
+          res.push(sh)
+          sectionId = sh.id.value
+        }
         break
       default:
-        res.push(parseEntry())
+        res.push(parseEntry(sectionId))
         break
     }
   }
@@ -128,6 +137,7 @@ function parseSectionHead(): CST.SectionHead {
   const start = pos
   pos += 1 // '['
   const id = parseId()
+  checkId(type, [], id)
   const close = parseChar(']')
   parseWhitespace()
   parseLineEnd(type)
@@ -143,10 +153,11 @@ function parseSectionHead(): CST.SectionHead {
  */
 const contentRegExp =
   /[\t\x20-\x5B\x5D-\x7E\u{A0}-\u{2027}\u{202A}-\u{D7FF}\u{E000}-\u{10FFFF}]/u
-function parseEntry(): CST.Entry {
+function parseEntry(sectionId: string[]): CST.Entry {
   const type = 'entry'
   const start = pos
   const id = parseId()
+  checkId(type, sectionId, id)
   const equal = parseChar('=')
 
   let range: CST.Range | null = null
@@ -203,6 +214,8 @@ function parseEntry(): CST.Entry {
 const idCharRegExp =
   /[-a-zA-Z0-9_\u{A1}-\u{1FFF}\u{200C}-\u{200D}\u{2030}-\u{205E}\u{2070}-\u{2FEF}\u{3001}-\u{D7FF}\u{F900}-\u{FDCF}\u{FDF0}-\u{FFFD}\u{10000}-\u{EFFFF}]/u
 function parseId(): CST.Id {
+  let start = pos
+  let end = pos
   const raw: CST.IdPart[] = []
   const value: string[] = []
 
@@ -234,6 +247,7 @@ function parseId(): CST.Id {
         const esc = parseEscape('id')
         raw.push(esc)
         curr += parseEscapeValue('id', esc.raw)
+        end = pos
         break
       }
       case '.': {
@@ -247,37 +261,73 @@ function parseId(): CST.Id {
         }
         raw.push({ type: 'dot', range })
         pos += 1
+        end = pos
         break
       }
       case '\t':
       case ' ':
         addContent(true)
         parseWhitespace()
+        if (raw.length === 0) start = pos // trim leading spaces
         break
-      default: {
-        const next = pos + 1
+      default:
+        end = pos + 1
         if (range) {
-          range[1] = next
+          range[1] = end
         } else {
-          range = [pos, next]
+          range = [pos, end]
           const prev = raw.at(-1)
           if (prev?.type === 'content') {
             onError([prev.range[1], pos], 'Unexpected whitespace in identifier')
           }
         }
         if (!idCharRegExp.test(ch)) {
-          onError([pos, next], 'Invalid identifier character')
+          onError([pos, end], 'Invalid identifier character')
         }
-        pos = next
-      }
+        pos = end
     }
   }
   addContent(true)
+
   const last = raw.at(-1)
-  if (last?.type === 'dot') {
+  if (!last) {
+    onError([start, Math.max(start + 1, end)], 'Expected an identifier')
+  } else if (last.type === 'dot') {
     onError(last.range, 'Trailing dot in identifier')
   }
-  return { raw, value }
+  return { raw, value, range: [start, Math.max(start, end)] }
+}
+
+function checkId(
+  context: 'entry' | 'section-head',
+  sectionId: string[],
+  { value, range }: CST.Id
+) {
+  const path = sectionId.length ? [...sectionId, ...value] : value
+  let error = false
+  paths: for (const prev of prevIdPaths) {
+    const prevLen = prev.path.length
+    const minLen = Math.min(path.length, prevLen)
+    for (let i = 0; i < minLen; ++i) {
+      if (path[i] !== prev.path[i]) continue paths
+    }
+    const msg =
+      path.length < prevLen
+        ? 'Shorter matching identifier must precede longer one'
+        : context === 'entry' && path.length === prevLen
+        ? 'Duplicate identifier'
+        : ''
+    if (msg) {
+      if (!prev.error) {
+        onError(prev.range, msg)
+        prev.error = true
+      }
+      onError(range, msg)
+      error = true
+      break paths
+    }
+  }
+  prevIdPaths.push({ path, error, range })
 }
 
 /**

@@ -61,6 +61,7 @@ test('one-line entry', () => {
       id: {
         raw: [{ type: 'content', value: 'foo', range: [0, 3] }],
         value: ['foo'],
+        range: [0, 3],
       },
       equal: 4,
       value: [[{ type: 'content', value: '{bar}', range: [6, 11] }]],
@@ -77,6 +78,7 @@ test('multi-line entry', () => {
       id: {
         raw: [{ type: 'content', value: 'foo', range: [0, 3] }],
         value: ['foo'],
+        range: [0, 3],
       },
       equal: 4,
       value: [
@@ -92,6 +94,7 @@ test('multi-line entry', () => {
       id: {
         raw: [{ type: 'content', value: 'next', range: [23, 27] }],
         value: ['next'],
+        range: [23, 27],
       },
       equal: 27,
       value: [[{ type: 'content', value: '{value}', range: [28, 35] }]],
@@ -108,6 +111,7 @@ test('multi-line entry with CRLF terminators', () => {
       id: {
         raw: [{ type: 'content', value: 'foo', range: [0, 3] }],
         value: ['foo'],
+        range: [0, 3],
       },
       equal: 4,
       value: [
@@ -133,6 +137,7 @@ test('section-head with trailing whitespace', () => {
           { type: 'content', value: 'bar', range: [8, 11] },
         ],
         value: ['foo', 'bar'],
+        range: [2, 11],
       },
       close: 12,
       range: [0, 16],
@@ -142,7 +147,7 @@ test('section-head with trailing whitespace', () => {
 
 test('escaped contents', () => {
   const res = parseOk(
-    '[f\\xf6o\\ \t.b\\u00E4r\\]]\nlong\\tkey={msg\\|\\nlines}\n'
+    '[f\\xf6o\\r\\n\\ \t.b\\u00E4r\\]\\|\\{]\nlong\\tkey={\\{msg\\|\\nlines}\n'
   )
   expect(res).toMatchObject<TestResource>([
     {
@@ -152,14 +157,18 @@ test('escaped contents', () => {
           { type: 'content', value: 'f' },
           { type: 'escape', raw: 'xf6' },
           { type: 'content', value: 'o' },
+          { type: 'escape', raw: 'r' },
+          { type: 'escape', raw: 'n' },
           { type: 'escape', raw: ' ' },
           { type: 'dot' },
           { type: 'content', value: 'b' },
           { type: 'escape', raw: 'u00E4' },
           { type: 'content', value: 'r' },
           { type: 'escape', raw: ']' },
+          { type: 'escape', raw: '|' },
+          { type: 'escape', raw: '{' },
         ],
-        value: ['föo ', 'bär]'],
+        value: ['föo\r\n ', 'bär]|{'],
       },
     },
     {
@@ -174,7 +183,9 @@ test('escaped contents', () => {
       },
       value: [
         [
-          { type: 'content', value: '{msg' },
+          { type: 'content', value: '{' },
+          { type: 'escape', raw: '{' },
+          { type: 'content', value: 'msg' },
           { type: 'escape', raw: '|' },
           { type: 'escape', raw: 'n' },
           { type: 'content', value: 'lines}' },
@@ -182,6 +193,84 @@ test('escaped contents', () => {
       ],
     },
   ])
+})
+
+describe('duplicate identifiers', () => {
+  test('top-level entries', () => {
+    const [res, calls] = parseFail('a=1\na=2\na=3')
+    expect(res).toMatchObject<TestResource>([
+      {
+        type: 'entry',
+        id: { value: ['a'], range: [0, 1] },
+        value: [[{ type: 'content', value: '1' }]],
+      },
+      {
+        type: 'entry',
+        id: { value: ['a'], range: [4, 5] },
+        value: [[{ type: 'content', value: '2' }]],
+      },
+      {
+        type: 'entry',
+        id: { value: ['a'], range: [8, 9] },
+        value: [[{ type: 'content', value: '3' }]],
+      },
+    ])
+    expect(calls).toMatchObject([
+      [res[0].id.range, 'Duplicate identifier'],
+      [res[1].id.range, 'Duplicate identifier'],
+      [res[2].id.range, 'Duplicate identifier'],
+    ])
+  })
+
+  test('identifiers get longer', () => {
+    const res = parseOk('a=1\na.b=2\n[a.b]\nc=3')
+    expect(res).toMatchObject<TestResource>([
+      {
+        type: 'entry',
+        id: { value: ['a'] },
+        value: [[{ type: 'content', value: '1' }]],
+      },
+      {
+        type: 'entry',
+        id: { value: ['a', 'b'] },
+        value: [[{ type: 'content', value: '2' }]],
+      },
+      { type: 'section-head', id: { value: ['a','b'] } },
+      {
+        type: 'entry',
+        id: { value: ['c'] },
+        value: [[{ type: 'content', value: '3' }]],
+      },
+    ])
+  })
+
+  test('identifiers get shorter', () => {
+    const [res, calls] = parseFail('a.b.c=1\na.b=2\na=3\n[a.b]')
+    expect(res).toMatchObject<TestResource>([
+      {
+        type: 'entry',
+        id: { value: ['a', 'b', 'c'] },
+        value: [[{ type: 'content', value: '1' }]],
+      },
+      {
+        type: 'entry',
+        id: { value: ['a', 'b'] },
+        value: [[{ type: 'content', value: '2' }]],
+      },
+      {
+        type: 'entry',
+        id: { value: ['a'] },
+        value: [[{ type: 'content', value: '3' }]],
+      },
+      { type: 'section-head', id: { value: ['a','b'] } },
+    ])
+    expect(calls).toMatchObject([
+      [res[0].id.range, 'Shorter matching identifier must precede longer one'],
+      [res[1].id.range, 'Shorter matching identifier must precede longer one'],
+      [res[2].id.range, 'Shorter matching identifier must precede longer one'],
+      [res[3].id.range, 'Shorter matching identifier must precede longer one'],
+    ])
+  })
 })
 
 describe('errors', () => {
@@ -198,6 +287,17 @@ describe('errors', () => {
       [[0, 1], 'Invalid identifier character'],
       [[8, 9], 'Invalid entry content character'],
     ])
+  })
+
+  test('empty identifier', () => {
+    const [res, calls] = parseFail('[ ]')
+    expect(res).toMatchObject<TestResource>([
+      {
+        type: 'section-head',
+        id: { raw: [], value: [], range: [2, 2] },
+      },
+    ])
+    expect(calls).toMatchObject([[[2, 3], 'Expected an identifier']])
   })
 
   test('identifier dots', () => {
