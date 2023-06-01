@@ -235,7 +235,7 @@ describe('duplicate identifiers', () => {
         id: { value: ['a', 'b'] },
         value: [[{ type: 'content', value: '2' }]],
       },
-      { type: 'section-head', id: { value: ['a','b'] } },
+      { type: 'section-head', id: { value: ['a', 'b'] } },
       {
         type: 'entry',
         id: { value: ['c'] },
@@ -262,7 +262,7 @@ describe('duplicate identifiers', () => {
         id: { value: ['a'] },
         value: [[{ type: 'content', value: '3' }]],
       },
-      { type: 'section-head', id: { value: ['a','b'] } },
+      { type: 'section-head', id: { value: ['a', 'b'] } },
     ])
     expect(calls).toMatchObject([
       [res[0].id.range, 'Shorter matching identifier must precede longer one'],

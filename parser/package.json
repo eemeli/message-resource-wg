@@ -4,6 +4,7 @@
   "description": "Reference parser for message resources",
   "main": "index.js",
   "scripts": {
+    "prettier": "prettier --write src/",
     "test": "vitest run --coverage"
   },
   "repository": {
