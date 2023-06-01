@@ -1,46 +1,48 @@
-export type ResourceCST = Array<EmptyLine | Comment | SectionHead | Entry>
+export namespace CST {
+  export type Resource = Array<EmptyLine | Comment | SectionHead | Entry>
 
-export type EmptyLine = { type: 'empty-line'; range: Range }
-export type Comment = {
-  type: 'comment'
-  /** Does not include the `#` or the line terminator. */
-  content: string
-  range: Range
-}
-export type SectionHead = {
-  type: 'section-head'
-  id: IdPart[]
-  /** The position of the `]`, or -1 if not found. */
-  close: number
-  /** `start` indicates the position of the `[`. */
-  range: Range
-}
-export type Entry = {
-  type: 'entry'
-  id: IdPart[]
-  /** The position of the `=`, or -1 if not found. */
-  equal: number
-  value: ValueLine[]
-  range: Range
-}
+  export type EmptyLine = { type: 'empty-line'; range: Range }
+  export type Comment = {
+    type: 'comment'
+    /** Does not include the `#` or the line terminator. */
+    content: string
+    range: Range
+  }
+  export type SectionHead = {
+    type: 'section-head'
+    id: IdPart[]
+    /** The position of the `]`, or -1 if not found. */
+    close: number
+    /** `start` indicates the position of the `[`. */
+    range: Range
+  }
+  export type Entry = {
+    type: 'entry'
+    id: IdPart[]
+    /** The position of the `=`, or -1 if not found. */
+    equal: number
+    value: ValueLine[]
+    range: Range
+  }
 
-export type IdPart = Content | Escape | IdDot
-export type IdDot = { type: 'dot'; range: Range }
+  export type IdPart = Content | Escape | IdDot
+  export type IdDot = { type: 'dot'; range: Range }
 
-export type ValueLine = Array<Content | Escape>
-export type Content = { type: 'content'; value: string; range: Range }
-export type Escape = {
-  type: 'escape'
-  /** Does not include the `\`. */
-  value: string
-  range: Range
+  export type ValueLine = Array<Content | Escape>
+  export type Content = { type: 'content'; value: string; range: Range }
+  export type Escape = {
+    type: 'escape'
+    /** Does not include the `\`. */
+    value: string
+    range: Range
+  }
+
+  /** `[start, end)` includes any trailing line terminator */
+  export type Range = [start: number, end: number]
 }
-
-/** `[start, end)` includes any trailing line terminator */
-export type Range = [start: number, end: number]
 
 /** GLOBAL STATE: Error handler */
-let onError: (range: Range, msg: string) => void
+let onError: (range: CST.Range, msg: string) => void
 
 /** GLOBAL STATE: Current parser position */
 let pos: number
@@ -57,17 +59,17 @@ let source: string
  */
 export function parseCST(
   source: string,
-  onError: (range: Range, msg: string) => void
-): ResourceCST
+  onError: (range: CST.Range, msg: string) => void
+): CST.Resource
 
 // resource = line *(newline line)
 // line = section-head / entry / comment / empty-line
 export function parseCST(
   source_: string,
-  onError_: (range: Range, msg: string) => void
-): ResourceCST {
+  onError_: (range: CST.Range, msg: string) => void
+): CST.Resource {
   if (!source_) return [{ type: 'empty-line', range: [0, 0] }]
-  const res: ResourceCST = []
+  const res: CST.Resource = []
   onError = onError_
   pos = 0
   source = source_
@@ -94,7 +96,7 @@ export function parseCST(
 }
 
 // empty-line = [ws]
-function parseEmptyLine(): EmptyLine {
+function parseEmptyLine(): CST.EmptyLine {
   const type = 'empty-line'
   const start = pos
   parseWhitespace()
@@ -103,7 +105,7 @@ function parseEmptyLine(): EmptyLine {
 }
 
 // comment = "#" *(content / backslash)
-function parseComment(): Comment {
+function parseComment(): CST.Comment {
   const start = pos
   pos += 1 // '#'
   let lf = source.indexOf('\n', pos)
@@ -120,7 +122,7 @@ function parseComment(): Comment {
 }
 
 // section-head = "[" [ws] id [ws] "]" [ws]
-function parseSectionHead(): SectionHead {
+function parseSectionHead(): CST.SectionHead {
   const type = 'section-head'
   const start = pos
   pos += 1 // '['
@@ -140,14 +142,14 @@ function parseSectionHead(): SectionHead {
  */
 const contentRegExp =
   /[\t\x20-\x5B\x5D-\x7E\u{A0}-\u{2027}\u{202A}-\u{D7FF}\u{E000}-\u{10FFFF}]/u
-function parseEntry(): Entry {
+function parseEntry(): CST.Entry {
   const type = 'entry'
   const start = pos
   const id = parseId()
   const equal = parseChar('=')
 
-  let range: Range | null = null
-  const addContent = (line: ValueLine) => {
+  let range: CST.Range | null = null
+  const addContent = (line: CST.ValueLine) => {
     if (range) {
       const value = source.substring(range[0], range[1])
       line.push({ type: 'content', value, range })
@@ -155,12 +157,12 @@ function parseEntry(): Entry {
     }
   }
 
-  const value: ValueLine[] = []
+  const value: CST.ValueLine[] = []
   while (pos < source.length) {
     const ls = pos
     parseWhitespace()
     if (pos === ls && value.length > 0) break
-    const line: ValueLine = []
+    const line: CST.ValueLine = []
     line: while (pos < source.length) {
       const ch = source[pos]
       switch (ch) {
@@ -199,9 +201,9 @@ function parseEntry(): Entry {
  */
 const idCharRegExp =
   /[-a-zA-Z0-9_\u{A1}-\u{1FFF}\u{200C}-\u{200D}\u{2030}-\u{205E}\u{2070}-\u{2FEF}\u{3001}-\u{D7FF}\u{F900}-\u{FDCF}\u{FDF0}-\u{FFFD}\u{10000}-\u{EFFFF}]/u
-function parseId(): IdPart[] {
-  const id: IdPart[] = []
-  let range: Range | null = null
+function parseId(): CST.IdPart[] {
+  const id: CST.IdPart[] = []
+  let range: CST.Range | null = null
   const addContent = () => {
     if (range) {
       const value = source.substring(range[0], range[1])
@@ -224,7 +226,7 @@ function parseId(): IdPart[] {
       }
       case '.': {
         addContent()
-        const range: Range = [pos, pos + 1]
+        const range: CST.Range = [pos, pos + 1]
         const prev = id.at(-1)
         if (!prev) {
           onError(range, 'Leading dot in identifier')
@@ -286,7 +288,7 @@ const escCommonChars = '\\\t nrt'
 const escIdRegExp =
   /[\x21-\x2F\x3A-\x40\x5B-\x60\x7B-\x7E\xA1-\xBF\xD7\xF7\u2010-\u2027\u2030-\u205E\u2190-\u2BFF]/
 const escValueChars = '{|}'
-function parseEscape(context: 'id' | 'value'): Escape {
+function parseEscape(context: 'id' | 'value'): CST.Escape {
   const start = pos
   pos += 1 // '\'
   const ch = source[pos]
