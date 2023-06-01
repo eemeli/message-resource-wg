@@ -10,7 +10,7 @@ export namespace CST {
   }
   export type SectionHead = {
     type: 'section-head'
-    id: IdPart[]
+    id: Id
     /** The position of the `]`, or -1 if not found. */
     close: number
     /** `start` indicates the position of the `[`. */
@@ -18,13 +18,14 @@ export namespace CST {
   }
   export type Entry = {
     type: 'entry'
-    id: IdPart[]
+    id: Id
     /** The position of the `=`, or -1 if not found. */
     equal: number
     value: ValueLine[]
     range: Range
   }
 
+  export type Id = { raw: IdPart[]; value: string[] }
   export type IdPart = Content | Escape | IdDot
   export type IdDot = { type: 'dot'; range: Range }
 
@@ -33,7 +34,7 @@ export namespace CST {
   export type Escape = {
     type: 'escape'
     /** Does not include the `\`. */
-    value: string
+    raw: string
     range: Range
   }
 
@@ -201,16 +202,25 @@ function parseEntry(): CST.Entry {
  */
 const idCharRegExp =
   /[-a-zA-Z0-9_\u{A1}-\u{1FFF}\u{200C}-\u{200D}\u{2030}-\u{205E}\u{2070}-\u{2FEF}\u{3001}-\u{D7FF}\u{F900}-\u{FDCF}\u{FDF0}-\u{FFFD}\u{10000}-\u{EFFFF}]/u
-function parseId(): CST.IdPart[] {
-  const id: CST.IdPart[] = []
+function parseId(): CST.Id {
+  const raw: CST.IdPart[] = []
+  const value: string[] = []
+
+  let curr = ''
   let range: CST.Range | null = null
-  const addContent = () => {
+  const addContent = (pushCurrent: boolean) => {
     if (range) {
-      const value = source.substring(range[0], range[1])
-      id.push({ type: 'content', value, range })
+      const src = source.substring(range[0], range[1])
+      raw.push({ type: 'content', value: src, range })
+      curr += src
       range = null
     }
+    if (pushCurrent && curr) {
+      value.push(curr)
+      curr = ''
+    }
   }
+
   loop: while (pos < source.length) {
     const ch = source[pos]
     switch (ch) {
@@ -220,26 +230,28 @@ function parseId(): CST.IdPart[] {
       case ']':
         break loop
       case '\\': {
-        addContent()
-        id.push(parseEscape('id'))
+        addContent(false)
+        const esc = parseEscape('id')
+        raw.push(esc)
+        curr += parseEscapeValue('id', esc.raw)
         break
       }
       case '.': {
-        addContent()
+        addContent(true)
         const range: CST.Range = [pos, pos + 1]
-        const prev = id.at(-1)
+        const prev = raw.at(-1)
         if (!prev) {
           onError(range, 'Leading dot in identifier')
         } else if (prev.type === 'dot') {
           onError([prev.range[0], pos + 1], 'Repeated dots in identifier')
         }
-        id.push({ type: 'dot', range })
+        raw.push({ type: 'dot', range })
         pos += 1
         break
       }
       case '\t':
       case ' ':
-        addContent()
+        addContent(true)
         parseWhitespace()
         break
       default: {
@@ -248,7 +260,7 @@ function parseId(): CST.IdPart[] {
           range[1] = next
         } else {
           range = [pos, next]
-          const prev = id.at(-1)
+          const prev = raw.at(-1)
           if (prev?.type === 'content') {
             onError([prev.range[1], pos], 'Unexpected whitespace in identifier')
           }
@@ -260,12 +272,12 @@ function parseId(): CST.IdPart[] {
       }
     }
   }
-  addContent()
-  const last = id.at(-1)
+  addContent(true)
+  const last = raw.at(-1)
   if (last?.type === 'dot') {
     onError(last.range, 'Trailing dot in identifier')
   }
-  return id
+  return { raw, value }
 }
 
 /**
@@ -301,8 +313,8 @@ function parseEscape(context: 'id' | 'value'): CST.Escape {
       context === 'id' ? escIdRegExp.test(ch) : escValueChars.includes(ch)
     if (!ok) onError([start, pos], 'Unknown character escape')
   }
-  const value = source.substring(start + 1, pos)
-  return { type: 'escape', value, range: [start, pos] }
+  const raw = source.substring(start + 1, pos)
+  return { type: 'escape', raw, range: [start, pos] }
 }
 
 const hexDigits = '0123456789ABCDEFabcdef'
@@ -317,6 +329,28 @@ function parseHexDigits(limit: number) {
     onError([pos - 2, pos + count], 'Not enough digits in character escape')
   }
   pos += count
+}
+
+function parseEscapeValue(context: 'id' | 'value', raw: string): string {
+  const ch = raw[0]
+  switch (ch) {
+    case 'n':
+      return '\n'
+    case 'r':
+      return '\r'
+    case 't':
+      return '\t'
+    case 'u':
+    case 'U':
+    case 'x':
+      return String.fromCharCode(parseInt(raw.substring(1), 16))
+    case '{':
+    case '|':
+    case '}':
+      return context === 'value' ? '\\' + ch : ch
+    default:
+      return ch
+  }
 }
 
 /** @returns `-1` on error */
