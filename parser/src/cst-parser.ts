@@ -175,7 +175,7 @@ function parseEntry(): Entry {
         default: {
           const next = pos + 1
           if (!contentRegExp.test(ch)) {
-            onError([pos, next], 'Invalid content character')
+            onError([pos, next], 'Invalid entry content character')
           }
           if (range) range[1] = next
           else range = [pos, next]
@@ -226,8 +226,10 @@ function parseId(): IdPart[] {
         addContent()
         const range: Range = [pos, pos + 1]
         const prev = id.at(-1)
-        if (!prev || prev.type === 'dot') {
-          onError(range, 'Repeated dot in identifier')
+        if (!prev) {
+          onError(range, 'Leading dot in identifier')
+        } else if (prev.type === 'dot') {
+          onError([prev.range[0], pos + 1], 'Repeated dots in identifier')
         }
         id.push({ type: 'dot', range })
         pos += 1
@@ -246,7 +248,7 @@ function parseId(): IdPart[] {
           range = [pos, next]
           const prev = id.at(-1)
           if (prev?.type === 'content') {
-            onError([prev.range[1], pos], 'Unexpected whitespace')
+            onError([prev.range[1], pos], 'Unexpected whitespace in identifier')
           }
         }
         if (!idCharRegExp.test(ch)) {
@@ -321,7 +323,7 @@ function parseChar(char: string) {
     pos += 1
     return pos - 1
   } else {
-    onError([pos, pos + 1], `Expected a ${char} here`)
+    onError([pos, pos + 1], `Expected a ${char} character here`)
     return -1
   }
 }
