@@ -40,20 +40,19 @@ symbols = %x21-2F / %x3A-40 / %x5B-60 / %x7B-7E ; ASCII symbols and punctuation
 ; If a message body line starts with significant whitespace,
 ; its first character must be \escaped.
 value = value-line *(newline ws value-line)
-value-line = *(content / value-escape)
+value-line = [(value-start / value-escape) *(content / value-escape)]
+; A resource must not contain any control characters or vertical whitespace
+; which might be mistaken for newlines.
+value-start = %x21-5B ; omit C0 controls, SP, and \
+            / %x5D-7E ; omit C1 controls
+            / %x00A0-2027 ; omit LSEP & PSEP
+            / %x202A-D7FF ; omit surrogates
+            / %xE000-10FFFF
+content = SP / HTAB / value-start
 ; Each of the escape sequences recognised by MF2 \\, \{, \|, \}
 ; pass through resource parsing as complete and intact,
 ; so that they do not need to be double-escaped.
 value-escape = backslash (escaped / "{" / "|" / "}")
-
-; A resource must not contain any control characters or vertical whitespace
-; which might be mistaken for newlines.
-content = HTAB ; omit C0 controls except for HTAB
-        / %x20-5B ; omit \
-        / %x5D-7E ; omit C1 controls
-        / %x00A0-2027 ; omit LSEP & PSEP
-        / %x202A-D7FF ; omit surrogates
-        / %xE000-10FFFF
 
 ; The bulk of valid escapes is shared between id-escape and value-escape.
 ; As an example, each of the these is a valid representation of a horizontal tab:
