@@ -3,7 +3,12 @@
 ; These are all separated from each other by LF or CRLF line endings.
 ; Except for empty lines, all lines start with a non-whitespace character.
 resource = line *(newline line)
-line = section-head / entry / comment / empty-line
+line = frontmatter / section-head / entry / metadata / comment / empty-line
+
+; Comments and metadata before the frontmatter attach to the entire resource.
+; A valid resource must have at most one frontmatter,
+; and it must not have any section-head or entry lines before the frontmatter.
+frontmatter = "---"
 
 ; As in TOML, entries after a section-head belong to the section.
 ; Sections do not nest under preceding sections,
@@ -11,11 +16,17 @@ line = section-head / entry / comment / empty-line
 section-head = "[" [ws] id [ws] "]" [ws]
 entry = id [ws] "=" [ws] value
 
+; Metadata attaches properties to the subsequent frontmatter, section-head or entry.
+; Other metadata lines are valid between metadata and its target,
+; but comments and empty lines are not.
+; As with entries, the value of metadata may span multiple lines,
+; provided that each beyond the first is indented by some whitespace.
+metadata = "@" id-part [ws value]
+
 ; Adjacent comments should be considered as a single multi-line comment.
-; Comments attach to a subsequent section-head or entry,
+; Comments attach to a subsequent frontmatter, section-head or entry,
 ; if not separated from it by any empty lines.
-; A first comment in a resource preceding any section-head or entry
-; and followed by an empty line attaches to the whole resource.
+; Metadata lines are valid between comments and their target.
 comment = "#" *(content / backslash)
 empty-line = [ws]
 
@@ -24,9 +35,13 @@ newline = CRLF / LF
 
 ; An identifier is made up of one or more non-empty parts separated by dots.
 ; Common symbols and non-printable characters must be \escaped in identifiers.
-id = id-part *([ws] "." [ws] id-part)
-id-part = 1*(id-char / id-escape)
-id-char = ALPHA / DIGIT / "-" / "_"
+; To avoid conflicts with frontmatter, and id starting with `---`
+; or consisting only of `-` characters must `\-` escape at least one of them.
+id = id-start [id-part] *([ws] "." [ws] id-part)
+id-start = id-safe / ("-" id-safe) / ("-" "-" id-safe)
+id-part = 1*(id-char / "-")
+id-char = id-safe / id-escpe
+id-safe = ALPHA / DIGIT / "_"
         / %x00A1-1FFF / %x200C-200D / %x2030-205E / %x2070-2FEF
         / %x3001-D7FF / %xF900-FDCF / %xFDF0-FFFD / %x10000-EFFFF
 id-escape = backslash (escaped / symbols)
