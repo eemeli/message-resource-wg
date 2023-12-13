@@ -12,12 +12,41 @@ A resource may classify its messages into groupings,
 and it may include additional data or metadata relating to them.
 It should be possible to represent a resource in a text-based human-friendly manner.
 
-To bootstrap this process,
-we are initially gathering issues in this repository
-to map out features that need to be supported and
-decisions that need to be made,
-as well as our internal practices for how to develop an eventual specification.
-We welcome your participation and interest!
+As currently specified, a message resource looks like this (syntax highlighting only approximate):
+
+```ini
+@locale en-US
+---
+
+one = A message with no properties
+
+@version 3
+@since 2023-11-30
+two = A message with some properties
+
+# Freeform comments must come before properties
+@param $foobar - An input argument
+                 with a multiline value
+three = Some {$foobar} message
+  with a multiline value
+
+# Properties also attach to section-heads
+@deprecated
+[section]
+
+four = Foo
+```
+
+This represents four `en-US` messages with keys `one`, `two`, `three`, and `section.four`.
+The comments and `@properties` each attach to the next
+section header, message entry, or resource frontmatter separator (not separated by whitespace).
+Properties and message values may be multiline, provided that each of the following lines is indented by some whitespace.
+All leading whitespace is trimmed from each line, unless it's `\` escaped.
+
+The exact syntax for properties and
+[message values](https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md)
+is defined separately.
+The canonical definition of the resource syntax is found in [`resource.abnf`](./resource.abnf).
 
 ### How to Contribute
 
@@ -35,3 +64,5 @@ We welcome your participation and interest!
   This is also the forum in which we should develop further our ways of working,
   which may also include interactions and forums outside this repository,
   such as occasional video calls.
+
+We welcome your participation and interest!
