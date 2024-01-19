@@ -80,7 +80,10 @@ export interface Metadata<M = string> {
 
   /**
    * The metadata contents.
-   * If this is a `string`,
+   *
+   * String values have all their character \escapes processed.
+   * Note that the processed values of `\\`, `\{`, `\|`, and `\}`
+   * are exactly the same characters sequences.
    */
   value: M;
 }
