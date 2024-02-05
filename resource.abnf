@@ -40,7 +40,7 @@ newline = CRLF / LF
 id = id-start [id-part] *([ws] "." [ws] id-part)
 id-start = id-safe / ("-" id-safe) / ("-" "-" id-safe)
 id-part = 1*(id-char / "-")
-id-char = id-safe / id-escpe
+id-char = id-safe / id-escape
 id-safe = ALPHA / DIGIT / "_"
         / %x00A1-1FFF / %x200C-200D / %x2030-205E / %x2070-2FEF
         / %x3001-D7FF / %xF900-FDCF / %xFDF0-FFFD / %x10000-EFFFF
