@@ -12,6 +12,27 @@ A resource may classify its messages into groupings,
 and it may include additional data or metadata relating to them.
 It should be possible to represent a resource in a text-based human-friendly manner.
 
+### How to Contribute
+
+- **Issues** are for specific aspects of the resulting specification.
+  Discussions here should be focused, and stay on topic.
+  New issues must include a sufficient initial description to introduce themselves,
+  and may contain an exploration of possible solutions to them.
+- **Pull requests** help develop and define the eventual specification.
+  Accepting and merging a PR should not be taken as the final word on any topic,
+  but each change should be an improvement on the previous.
+  Each PR should only apply one change that may be squashed to the `main` branch.
+  Text content should use [semantic line breaks](https://sembr.org/).
+  A PR may close one or more issues, but this is not required.
+- **Discussions** are freeform, and may well refer to multiple issues or topics.
+  This is also the forum in which we should develop further our ways of working,
+  which may also include interactions and forums outside this repository,
+  such as occasional video calls.
+
+We welcome your participation and interest!
+
+## Syntax
+
 As currently specified, a message resource looks like this (syntax highlighting only approximate):
 
 ```ini
@@ -48,21 +69,18 @@ The exact syntax for properties and
 is defined separately.
 The canonical definition of the resource syntax is found in [`resource.abnf`](./resource.abnf).
 
-### How to Contribute
+## Data Model
 
-- **Issues** are for specific aspects of the resulting specification.
-  Discussions here should be focused, and stay on topic.
-  New issues must include a sufficient initial description to introduce themselves,
-  and may contain an exploration of possible solutions to them.
-- **Pull requests** help develop and define the eventual specification.
-  Accepting and merging a PR should not be taken as the final word on any topic,
-  but each change should be an improvement on the previous.
-  Each PR should only apply one change that may be squashed to the `main` branch.
-  Text content should use [semantic line breaks](https://sembr.org/).
-  A PR may close one or more issues, but this is not required.
-- **Discussions** are freeform, and may well refer to multiple issues or topics.
-  This is also the forum in which we should develop further our ways of working,
-  which may also include interactions and forums outside this repository,
-  such as occasional video calls.
+A message resource data model corresponding to the syntax definition
+is included as [`resource.d.ts`](./resource.d.ts),
+an extensively commented TypeScript definition.
 
-We welcome your participation and interest!
+To enable interchange, a JSON Schema definition of the data model
+is also provided in [`resource.json`](./resource.json).
+This corresponds to `Resource<string, Message, false>`
+in the parametric TypeScript definition,
+where `Message` is a [MessageFormat 2 Message](https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/README.md#messages).
+
+As with the MessageFormat 2 data model,
+the message resource JSON Schema relaxes some aspects of the data model,
+allowing comment and metadata values to be optional rather than required properties.

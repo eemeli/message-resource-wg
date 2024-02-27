@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/eemeli/message-resource-wg/blob/main/resource.json",
+
+  "type": "object",
+  "properties": {
+    "comment": { "type": "string" },
+    "meta": { "$ref": "#/$defs/meta" },
+    "body": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/comment" },
+          { "$ref": "#/$defs/entry" },
+          { "$ref": "#/$defs/sectionhead" }
+        ]
+      }
+    }
+  },
+  "required": ["body"],
+
+  "$defs": {
+    "comment": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "comment" },
+        "comment": { "type": "string" }
+      },
+      "required": ["type", "comment"]
+    },
+    "entry": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "entry" },
+        "comment": { "type": "string" },
+        "id": { "$ref": "#/$defs/id" },
+        "meta": { "$ref": "#/$defs/meta" },
+        "value": {
+          "$ref": "https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/message.json"
+        }
+      },
+      "required": ["type", "id", "value"]
+    },
+    "id": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "meta": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "value": { "type": "string" }
+        },
+        "required": ["id", "value"]
+      }
+    },
+    "sectionhead": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "entry" },
+        "comment": { "type": "string" },
+        "id": { "$ref": "#/$defs/id" },
+        "meta": { "$ref": "#/$defs/meta" }
+      },
+      "required": ["type", "id"]
+    }
+  }
+}
