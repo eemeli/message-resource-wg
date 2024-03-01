@@ -6,18 +6,29 @@
   "properties": {
     "comment": { "type": "string" },
     "meta": { "$ref": "#/$defs/meta" },
-    "body": {
+    "sections": {
       "type": "array",
       "items": {
-        "oneOf": [
-          { "$ref": "#/$defs/comment" },
-          { "$ref": "#/$defs/entry" },
-          { "$ref": "#/$defs/sectionhead" }
-        ]
+        "type": "object",
+        "properties": {
+          "comment": { "type": "string" },
+          "id": { "$ref": "#/$defs/id" },
+          "meta": { "$ref": "#/$defs/meta" },
+          "entries": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                { "$ref": "#/$defs/comment" },
+                { "$ref": "#/$defs/entry" }
+              ]
+            }
+          }
+        },
+        "required": ["entries"]
       }
     }
   },
-  "required": ["body"],
+  "required": ["sections"],
 
   "$defs": {
     "comment": {
@@ -55,16 +66,6 @@
         },
         "required": ["id", "value"]
       }
-    },
-    "sectionhead": {
-      "type": "object",
-      "properties": {
-        "type": { "const": "entry" },
-        "comment": { "type": "string" },
-        "id": { "$ref": "#/$defs/id" },
-        "meta": { "$ref": "#/$defs/meta" }
-      },
-      "required": ["type", "id"]
     }
   }
 }

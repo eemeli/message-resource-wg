@@ -21,13 +21,13 @@
  */
 export interface Resource<M = string, V = string, J extends boolean = false> {
   /**
-   * A comment on the whole resource, which applies to all of its entries.
+   * A comment on the whole resource, which applies to all of its sections and entries.
    *
    * May contain multiple lines separated by `\n` characters.
    * For each line, the `#` sigil and up to one space or tab is trimmed
    * from the start of the line, along with any trailing whitespace.
    * In the syntax, each line will be prefixed by `#` and if the line is not empty, one space.
-   * 
+   *
    * An empty or whitespace-only comment will be represented by an empty string.
    *
    * In the syntax, resource comments are separated from the rest of the resource
@@ -44,26 +44,12 @@ export interface Resource<M = string, V = string, J extends boolean = false> {
   meta: Metadata<M>[];
 
   /**
-   * The body of a resource, consisting of an array of
-   * - section headers
-   * - message entries
-   * - comments
-   * - optionally, any junk content that could not be parsed.
+   * The body of a resource, consisting of an array of sections.
    *
-   * Each of the above may be identified by its string `type` property.
-   *
-   * Empty lines are not included in the body.
-   *
-   * A valid resource may have an empty body.
+   * A valid resource may have an empty sections array.
    */
-  body: Line<M, V, J>[];
+  sections: Section<M, V, J>[];
 }
-
-export type Line<M = string, V = string, J extends boolean = false> =
-  | SectionHead<M>
-  | Entry<M, V>
-  | Comment
-  | (J extends true ? Junk : never);
 
 /**
  * Metadata is attached to a resource, section, or a single entry.
@@ -88,9 +74,7 @@ export interface Metadata<M = string> {
   value: M;
 }
 
-export interface SectionHead<M = string> {
-  type: "section";
-
+export interface Section<M = string, V = string, J extends boolean = false> {
   /**
    * A comment on the whole section, which applies to all of its entries.
    *
@@ -98,7 +82,7 @@ export interface SectionHead<M = string> {
    * For each line, the `#` sigil and up to one space or tab is trimmed
    * from the start of the line, along with any trailing whitespace.
    * In the syntax, each line will be prefixed by `#` and if the line is not empty, one space.
-   * 
+   *
    * An empty or whitespace-only comment will be represented by an empty string.
    * */
   comment: string;
@@ -110,16 +94,30 @@ export interface SectionHead<M = string> {
    * The section identifier.
    *
    * Each `string` part of the identifier MUST be a non-empty string.
-   * 
-   * The resource syntax requires this array to be non-empty,
+   *
+   * The top-level or anonymous section has an empty `id` array.
+   * The resource syntax requires this array to be non-empty
+   * for all sections after the first one,
    * but empty identifier arrays MAY be used
    * when this data model is used to represent other message resource formats,
    * such as Fluent FTL files.
    *
-   * The identifiers of entries following a section header are not normalized,
+   * The entry identifiers are not normalized,
    * i.e. they do not include this identifier.
    */
   id: string[];
+
+  /**
+   * Section entries consist of:
+   * - message entries
+   * - comments
+   * - optionally, any junk content that could not be parsed.
+   *
+   * Each of the above may be identified by its string `type` property.
+   *
+   * Empty lines are not included in the data model.
+   */
+  entries: (Entry<M, V> | Comment | (J extends true ? Junk : never))[];
 }
 
 export interface Entry<M = string, V = string> {
@@ -132,7 +130,7 @@ export interface Entry<M = string, V = string> {
    * For each line, the `#` sigil and up to one space or tab is trimmed
    * from the start of the line, along with any trailing whitespace.
    * In the syntax, each line will be prefixed by `#` and if the line is not empty, one space.
-   * 
+   *
    * An empty or whitespace-only comment will be represented by an empty string.
    * */
   comment: string;
@@ -145,7 +143,7 @@ export interface Entry<M = string, V = string> {
    *
    * This MUST be a non-empty array of non-empty `string` values.
    *
-   * The identifiers of entries following a section header are not normalized,
+   * The identifiers of entries in a section are not normalized,
    * i.e. they do not include its identifier.
    *
    * In a valid resource, each entry has a distinct normalized identifier,
@@ -155,7 +153,7 @@ export interface Entry<M = string, V = string> {
 
   /**
    * The value of an entry, i.e. the message.
-   * 
+   *
    * String values have all their character \escapes processed.
    * Note that the processed values of `\\`, `\{`, `\|`, and `\}`
    * are exactly the same characters sequences.
@@ -173,7 +171,7 @@ export interface Comment {
    * For each line, the `#` sigil and up to one space or tab is trimmed
    * from the start of the line, along with any trailing whitespace.
    * In the syntax, each line will be prefixed by `#` and if the line is not empty, one space.
-   * 
+   *
    * An empty or whitespace-only comment will be represented by an empty string.
    * */
   comment: string;
@@ -184,7 +182,7 @@ export interface Junk {
 
   /**
    * Raw source contents from an invalid resource.
-   * 
+   *
    * If junk is included in the parsed representation of a resource,
    * it represents content that failed to parse.
    */
