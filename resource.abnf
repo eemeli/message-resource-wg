@@ -54,6 +54,9 @@ symbols = %x21-2F / %x3A-40 / %x5B-60 / %x7B-7E ; ASCII symbols and punctuation
 ; as long as each line after the first is indented by at least one space.
 ; If a message body line starts with significant whitespace,
 ; its first character must be \escaped.
+; When a newline occurs in a value,
+; it is always considered to represent a single U+000A LF character.
+; To include a U+000D CR character in a value, it must be \r escaped.
 value = value-line *(newline ws value-line)
 value-line = [(value-start / value-escape) *(content / value-escape)]
 ; A resource must not contain any control characters or vertical whitespace
@@ -70,9 +73,12 @@ content = SP / HTAB / value-start
 value-escape = backslash (escaped / "{" / "|" / "}")
 
 ; The bulk of valid escapes is shared between id-escape and value-escape.
+; If a newline is \ escaped, it (and the subsequent whitespace indentation) is ignored.
+; This allows for long keys and values to be wrapped for legibility.
 ; As an example, each of the these is a valid representation of a horizontal tab:
 ; \	, \t, \x09, \u0009, \U000009
 escaped = backslash
+        / (newline ws)
         / SP / HTAB
         / %s"n" / %s"r" / %s"t" ; represent LF, CR, HTAB
         / (%s"x" HEXDIG HEXDIG)
