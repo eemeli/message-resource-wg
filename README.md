@@ -77,7 +77,7 @@ an extensively commented TypeScript definition.
 
 To enable interchange, a JSON Schema definition of the data model
 is also provided in [`resource.json`](./resource.json).
-This corresponds to `Resource<string, Message, false>`
+This corresponds to `Resource<Message, false>`
 in the parametric TypeScript definition,
 where `Message` is a [MessageFormat 2 Message](https://github.com/unicode-org/message-format-wg/blob/main/spec/data-model/README.md#messages).
 

@@ -1,7 +1,7 @@
 /**
  * The data model representation of a message resource.
  *
- * This interface is generic, to allow for metadata and entry values
+ * This interface is generic, to allow for entry values
  * to be represented by their parsed representations,
  * and for invalid resources to be represented.
  *
@@ -11,15 +11,14 @@
  * when manipulating it programmatically.
  *
  * Similarly, all character escapes are processed in this representation
- * (for all identifiers, and for `string` metadata and entry values),
+ * (for all identifiers, metadata, and for `string` entry values),
  * and users are encouraged to always normalize
  * the syntax representation of escaped characters.
  *
- * @typeParam M - Metadata value type
  * @typeParam V - Entry value type
  * @typeParam J - If `true`, the resource body may include Junk
  */
-export interface Resource<M = string, V = string, J extends boolean = false> {
+export interface Resource<V = string, J extends boolean = false> {
   /**
    * A comment on the whole resource, which applies to all of its sections and entries.
    *
@@ -41,20 +40,20 @@ export interface Resource<M = string, V = string, J extends boolean = false> {
    * In the syntax, these are separated from the rest of the resource
    * by a frontmatter separator line `---`.
    */
-  meta: Metadata<M>[];
+  meta: Metadata[];
 
   /**
    * The body of a resource, consisting of an array of sections.
    *
    * A valid resource may have an empty sections array.
    */
-  sections: Section<M, V, J>[];
+  sections: Section<V, J>[];
 }
 
 /**
  * Metadata is attached to a resource, section, or a single entry.
  */
-export interface Metadata<M = string> {
+export interface Metadata {
   /**
    * A non-empty string keyword.
    *
@@ -67,14 +66,14 @@ export interface Metadata<M = string> {
   /**
    * The metadata contents.
    *
-   * String values have all their character \escapes processed.
+   * Values have all their character \escapes processed.
    * Note that the processed values of `\\`, `\{`, `\|`, and `\}`
    * are exactly the same characters sequences.
    */
-  value: M;
+  value: string;
 }
 
-export interface Section<M = string, V = string, J extends boolean = false> {
+export interface Section<V = string, J extends boolean = false> {
   /**
    * A comment on the whole section, which applies to all of its entries.
    *
@@ -88,7 +87,7 @@ export interface Section<M = string, V = string, J extends boolean = false> {
   comment: string;
 
   /** Metadata attached to this section. */
-  meta: Metadata<M>[];
+  meta: Metadata[];
 
   /**
    * The section identifier.
@@ -117,10 +116,10 @@ export interface Section<M = string, V = string, J extends boolean = false> {
    *
    * Empty lines are not included in the data model.
    */
-  entries: (Entry<M, V> | Comment | (J extends true ? Junk : never))[];
+  entries: (Entry<V> | Comment | (J extends true ? Junk : never))[];
 }
 
-export interface Entry<M = string, V = string> {
+export interface Entry<V = string> {
   type: "entry";
 
   /**
@@ -136,7 +135,7 @@ export interface Entry<M = string, V = string> {
   comment: string;
 
   /** Metadata attached to this entry. */
-  meta: Metadata<M>[];
+  meta: Metadata[];
 
   /**
    * The entry identifier.
