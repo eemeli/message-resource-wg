@@ -75,7 +75,7 @@ The resource format work should follow a similar approach,
 for example by ensuring that its data model provides not only a useful representation
 of any syntax representation of a resource format defined here,
 but also all existing resource formats.
-Doing so would make it much easier for resource format conversion tools to be built,
+Doing so makes it much easier for resource format conversion tools to be built,
 not only to the new format, but even between existing formats.
 
 Similarly, a well-defined set of message properties or metadata
