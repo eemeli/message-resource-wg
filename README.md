@@ -47,7 +47,7 @@ For instance:
 
 It would of course be possible to define a JSON or XML Schema
 for a resource format that would address all of the above issues.
-However, while these formats are relatively easy to read, they are not easy to _write_.
+However, while JSON and XML are relatively easy to read, they are not easy to _write_.
 This would disadvantage in particular translators
 who do not have access to tooling beyond a simple text editor.
 JSON/XML schemas could of course be defined as a part of the effort,
