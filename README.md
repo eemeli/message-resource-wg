@@ -2,7 +2,7 @@
 
 The purpose of this effort is to
 develop a standard for [Unicode MessageFormat 2] resources,
-which may be used as a file format or otherwise.
+which may be used as a file format.
 
 [unicode messageformat 2]: https://github.com/unicode-org/message-format-wg
 
@@ -155,7 +155,7 @@ This represents four `en-US` messages with keys `one`, `two`, `three`, `section.
 The comments and `@properties` each attach to the next
 section header, message entry, or resource frontmatter separator (not separated by whitespace).
 Properties and message values may be multiline, provided that each of the following lines is indented by some whitespace.
-All leading whitespace is trimmed from each line, unless it's `\` escaped.
+All leading whitespace is trimmed from each line, unless it's escaped with `\`.
 
 The exact syntax for properties and
 [message values](https://github.com/unicode-org/message-format-wg/blob/main/spec/syntax.md)
