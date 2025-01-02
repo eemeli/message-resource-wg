@@ -17,18 +17,19 @@ at the [2024 Unicode Tech Workshop](https://www.unicode.org/events/utw/2024/).
 
 ### Why?
 
-The work on MessageFormat 2 has identified the following challenges
-that go beyond or arise from the new message format,
+The prior work on a new message format has identified the following challenges
+that go beyond or arise from defining the syntax and behavior of a single message,
 but which are not well addressed by existing resource formats:
 
-- The MessageFormat 2 syntax is naturally multi-line,
+- The MessageFormat 2 message syntax is naturally multi-line,
   and multi-line values are not easy to use in many of the current resource formats.
 - Comments and metadata are important for translators,
   but (mostly) not relevant for formatting.
   Their attachment to messages needs to be well specified,
   while being easy to read, write, and ignore.
 - Structured message metadata needs a common schema to be universally understood.
-- Many messages are composed of multiple localizable parts,
+- Many messages are composed of multiple localizable parts
+  (such as an HTML element with a localizable body and localizable attributes),
   and it should be possible to express a compound message formed of multiple connected parts.
 - A purpose-built localization resource format should be well specified,
   and designed from the ground up to work with multiple implementations.
@@ -37,7 +38,7 @@ Some of these aspects are well supported by existing formats,
 but no one resource format serves all of the identified use cases.
 For instance:
 
-- Comments in Gettext .po files come in multiple types and [clearly assign] to the following entry,
+- Comments in Gettext .po files come in multiple types and [clearly attaches] to the following entry,
   but its representation of multi-line values is rather clumsy.
 - Fluent supports composability via [attributes] and [message references],
   but its FTL format is tightly coupled with its own message format.
@@ -50,11 +51,11 @@ for a resource format that would address all of the above issues.
 However, while JSON and XML are relatively easy to read, they are not easy to _write_.
 This would disadvantage in particular translators
 who do not have access to tooling beyond a simple text editor.
-JSON/XML schemas could of course be defined as a part of the effort,
+JSON/XML schemas should be defined as a part of the effort,
 to represent a data model view of the resource formats,
-complimenting the [message data model].
+complementing the [message data model].
 
-[clearly assign]: https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html
+[clearly attaches]: https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html
 [attributes]: https://projectfluent.org/fluent/guide/attributes.html
 [message references]: https://projectfluent.org/fluent/guide/references.html
 [message data model]: https://github.com/unicode-org/message-format-wg/tree/main/spec/data-model
@@ -81,7 +82,7 @@ not only to the new format, but even between existing formats.
 Similarly, a well-defined set of message properties or metadata
 could be adopted completely separately from the rest of the specification.
 It should still be defined within the context of the new resource format,
-to ensure that its requirements are addressed by the resource format,
+to ensure that its requirements are addressed,
 and as an essential part in ensuring compatibility with existing formats.
 
 ## Deliverables
@@ -124,6 +125,7 @@ two = A message with some properties
 # Freeform comments must come before properties.
 # Multiline messages and properties are indented,
 # with each line's leading whitespace trimmed from their value.
+# Newlines within values are retained.
 @param $foobar - An input argument
                  with a multiline description
 three = Some {$foobar} message
