@@ -21,18 +21,26 @@ The prior work on a new message format has identified the following challenges
 that go beyond or arise from defining the syntax and behavior of a single message,
 but which are not well addressed by existing resource formats:
 
-- The MessageFormat 2 message syntax is naturally multi-line,
+- The MessageFormat 2 message syntax is naturally multi-line due to its internal structure,
   and multi-line values are not easy to use in many of the current resource formats.
-- Comments and metadata are important for translators,
-  but (mostly) not relevant for formatting.
+- Comments and metadata (set either by automation or manually)
+  are an important means for translators and developers to communicated with one-another,
+  but are irrelevant to the retrieval and display of the message.
   Their attachment to messages needs to be well specified,
   while being easy to read, write, and ignore.
-- Structured message metadata needs a common schema to be universally understood.
+- Structured metadata needs a common schema in order to be universally understood.
+- Hierarchical groupings of messages need to be representable,
+  and metadata be assignable not only to individual messages,
+  but also groups of messages.
 - Many messages are composed of multiple localizable parts
   (such as an HTML element with a localizable body and localizable attributes),
   and it should be possible to express a compound message formed of multiple connected parts.
+  While MessageFormat 2 does support e.g. markup elements with option values,
+  this may make it difficult to segment a message's localizable parts from each other.
 - A purpose-built localization resource format should be well specified,
   and designed from the ground up to work with multiple implementations.
+  Its design and capabilities need to account for existing localization formats,
+  and allow for the representation of messages and resources in those formats.
 
 Some of these aspects are well supported by existing formats,
 but no one resource format serves all of the identified use cases.
@@ -49,7 +57,7 @@ For instance:
 It would of course be possible to define a JSON or XML Schema
 for a resource format that would address all of the above issues.
 However, while JSON and XML are relatively easy to read, they are not easy to _write_.
-This would disadvantage in particular translators
+This would disadvantage in particular developers and translators
 who do not have access to tooling beyond a simple text editor.
 JSON/XML schemas should be defined as a part of the effort,
 to represent a data model view of the resource formats,
