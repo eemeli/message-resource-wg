@@ -1,8 +1,8 @@
 # Message Resource Working Group
 
-The purpose of this effort is to
-develop a standard for [Unicode MessageFormat 2] resources,
-which may be used as a file format.
+The purpose of this effort is to develop the specification
+for a **_message resource_** as a standard container for [Unicode MessageFormat 2] messages.
+The serialized form of a message resource may be used as a file format.
 
 [unicode messageformat 2]: https://github.com/unicode-org/message-format-wg
 
@@ -46,12 +46,12 @@ Some of these aspects are well supported by existing formats,
 but no one resource format serves all of the identified use cases.
 For instance:
 
-- Comments in Gettext .po files come in multiple types and [clearly attaches] to the following entry,
-  but its representation of multi-line values is rather clumsy.
+- Comments in Gettext .po files come in multiple types and each [clearly attaches] to the following entry,
+  but the format's representation of multi-line values is rather clumsy.
 - Fluent supports composability via [attributes] and [message references],
   but its FTL format is tightly coupled with its own message format.
 - XLIFF is an [OASIS Standard],
-  but it's primarily a machine interchange format that is not designed for human authoring
+  but it is primarily a machine interchange format that is not designed for human authoring
   and its message representation does not provide for message variants.
 
 It would of course be possible to define a JSON or XML Schema
@@ -85,7 +85,7 @@ for example by ensuring that its data model provides not only a useful represent
 of any syntax representation of a resource format defined here,
 but also all existing resource formats.
 Doing so makes it much easier for resource format conversion tools to be built,
-not only to the new format, but even between existing formats.
+not only to and from the new format, but also between existing formats.
 
 Similarly, a well-defined set of message properties or metadata
 could be adopted completely separately from the rest of the specification.
@@ -107,7 +107,7 @@ other current and future localization formats also need to be considered.
 For example, it should be possible to:
 
 - represent a Gettext `.po` file using the data model,
-- use the same message properties within some other custom resource format, or
+- use the same message properties within some other custom resource format, and
 - embed messages with a different format than MF2 in a message resource.
 
 The definition of a resource loader is not within the scope of this work,
