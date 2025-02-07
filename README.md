@@ -32,7 +32,7 @@ but which are not well addressed by existing resource formats:
 - Hierarchical groupings of messages need to be representable,
   and metadata be assignable not only to individual messages,
   but also groups of messages.
-- Many messages are composed of multiple localizable parts
+- Many localizable messages need to be composed together
   (such as an HTML element with a localizable body and localizable attributes),
   and it should be possible to express a compound message formed of multiple connected parts.
   While MessageFormat 2 does support e.g. markup elements with option values,
@@ -94,6 +94,20 @@ It should still be defined within the context of the new resource format,
 to ensure that its requirements are addressed,
 and as an essential part in ensuring compatibility with existing formats.
 
+### Non-Goals
+
+At least initially, the work should focus on the definition of
+the data held within a localization resource, including its data model representation,
+but not on how that data is to be processed.
+In other words, a message resource specification should not mandate
+the runtime behaviour of a message formatter or other tool processing said data.
+
+The following are therefore explicitly left out of scope:
+
+- Whether and how multiple resources could be bundled together at runtime.
+- Whether and how to perform fallback between locales if a resource is incomplete for a first-choice locale.
+- Whether and how to query and iterate messages within a resource.
+
 ## Deliverables
 
 Within the overall purpose of defining a new resource format,
@@ -154,13 +168,13 @@ four =
 # Properties attached to section heads apply to all messages within.
 # Sections do not nest, but may use . as separator for multi-part names.
 @do-not-translate
-[other.section]
+[section.more]
 
 # This message (other.section.five) should not be modified from the original.
 five = Foo
 ```
 
-This represents four `en-US` messages with keys `one`, `two`, `three`, `section.four`, and `other.section.five`.
+This represents four `en-US` messages with keys `one`, `two`, `three`, `section.four`, and `section.more.five`.
 The comments and `@properties` each attach to the next
 section header, message entry, or resource frontmatter separator (not separated by whitespace).
 Properties and message values may be multiline, provided that each of the following lines is indented by some whitespace.
